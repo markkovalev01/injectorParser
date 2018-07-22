@@ -6,6 +6,6 @@
 </head>
 <body>
 <test>world</test>
-<inj name=""></inj>>
+<inj name="dfsf"></inj>
 </body>
 </html>

@@ -1,27 +1,75 @@
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
 import java.io.File
+import java.io.FileFilter
+import java.io.FilenameFilter
 
 class Parser(htmlFile: File) {
-    val document: Document;
+    val text: String;
+    val regular: Regex;
 
     init {
-        document = Jsoup.parse(htmlFile, "UTF-8");
+        text = htmlFile.readText(Charsets.UTF_8);
+        regular = Regex("<inj name=")
     }
 
     public fun hasInject(): Boolean {
-        var inj: Elements = document.select("inj");
-        if (inj.isEmpty()) {
-            return false;
-        }
-        return true;
+        return regular.containsMatchIn(text);
     }
 }
 
+class InjectorFinder(rootPass: String) {
+    val root: File;
+    val listFiles: ArrayList<String>;
+
+    init {
+        root = File(rootPass);
+        listFiles = ArrayList<String>();
+    }
+
+//    public fun test() {
+//        println("yes");
+//        for (i in 0..10) {
+//            println(2);
+//            launch {
+////                delay(2000);
+//                println("1");
+//                listFiles.add("i ${i}");}
+//            Thread.sleep(100)
+//            }
+//        }
+
+    public fun searchInject() {
+        if (root.isDirectory) {
+            root
+                    .walk()
+                    .filter { it -> Regex("txt|html|htm|jsp|frag").containsMatchIn(it.extension) }
+                    .forEach {
+                        launch {
+                            if (Parser(it).hasInject()) {
+                                listFiles.add(it.absolutePath)
+                            }
+                        }
+                        Thread.sleep(20)
+                    }
+        }
+    }
+
+    public fun showInjFiles() {
+        listFiles.forEach { println(it) }
+    }
+
+}
+
 fun main(args: Array<String>) {
-    val parser = Parser(File("test.html"));
-    println(parser.hasInject());
-    val parser1 = Parser(File("test2.htm"));
-    println(parser1.hasInject());
+    val start = System.currentTimeMillis();
+    val finder = InjectorFinder("C:\\Users\\Admin\\IdeaProjects\\injectorParser")
+    finder.searchInject()
+    finder.showInjFiles()
+    println(System.currentTimeMillis() - start);
 }
