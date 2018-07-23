@@ -5,17 +5,19 @@ import kotlinx.coroutines.experimental.launch
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
-import java.io.File
-import java.io.FileFilter
-import java.io.FilenameFilter
+import java.io.*
+import java.util.*
 
-class Parser(htmlFile: File) {
+class Parser(htmlFile: File, pattern:String) {
     val text: String;
     val regular: Regex;
 
+
     init {
         text = htmlFile.readText(Charsets.UTF_8);
-        regular = Regex("<inj name=|injector.bgpu")
+        // "<inj name=|injector.bgpu"
+        regular = Regex(pattern)
+
     }
 
     public fun hasInject(): Boolean {
@@ -23,12 +25,16 @@ class Parser(htmlFile: File) {
     }
 }
 
-class InjectorFinder(rootPass: String) {
+class InjectorFinder(rootPass: String, pattern: String, extension:String) {
     val root: File;
+    val pattern:String
+    val extension:String
     val listFiles: ArrayList<String>;
 
     init {
         root = File(rootPass);
+        this.pattern = pattern
+        this.extension = extension
         listFiles = ArrayList<String>();
     }
 
@@ -46,18 +52,40 @@ class InjectorFinder(rootPass: String) {
 
     public fun searchInject() {
         if (root.isDirectory) {
+            if(extension!=""){
             root
                     .walk()
-                    .filter { it -> Regex("txt|html|htm|jsp|frag").containsMatchIn(it.extension) }
+                    // "txt|htm|jsp$|frag$"
+                    .filter { it -> Regex(extension).containsMatchIn(it.extension) }
                     .forEach {
-                            if (Parser(it).hasInject()) {
+                            if (Parser(it, pattern).hasInject()) {
                                 listFiles.add(it.absolutePath)
                             }
                     }
+        }else{
+                print("yes")
+                root
+                        .walk()
+                        // "txt|htm|jsp$|frag$"
+//                    .filter { it -> Regex(extension).containsMatchIn(it.extension) }
+                        .forEach {
+                            if (it.isFile && Parser(it, pattern).hasInject()) {
+                                val file = File(it.absolutePath+".docx")
+                                it.renameTo(file)
+//                            listFiles.add(it.absolutePath)
+                            }
+                        }
+            }
         }
+
     }
 
     public fun showInjFiles() {
+//       val file:File = File("out.txt")
+//        if(!file.exists()){
+//            file.createNewFile()
+//        }
+//        val bw:BufferedWriter = BufferedWriter(BufferedOutputStream(file))
         listFiles.forEach { println(it) }
     }
 
@@ -65,7 +93,7 @@ class InjectorFinder(rootPass: String) {
 
 fun main(args: Array<String>) {
     val start = System.currentTimeMillis();
-    val finder = InjectorFinder("C:\\Users")
+    val finder = InjectorFinder("E:\\storage","Content_Types..xml","")
     finder.searchInject()
     finder.showInjFiles()
     println(System.currentTimeMillis() - start);
