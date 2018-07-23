@@ -15,7 +15,7 @@ class Parser(htmlFile: File) {
 
     init {
         text = htmlFile.readText(Charsets.UTF_8);
-        regular = Regex("<inj name=")
+        regular = Regex("<inj name=|injector.bgpu")
     }
 
     public fun hasInject(): Boolean {
@@ -50,12 +50,9 @@ class InjectorFinder(rootPass: String) {
                     .walk()
                     .filter { it -> Regex("txt|html|htm|jsp|frag").containsMatchIn(it.extension) }
                     .forEach {
-                        launch {
                             if (Parser(it).hasInject()) {
                                 listFiles.add(it.absolutePath)
                             }
-                        }
-                        Thread.sleep(20)
                     }
         }
     }
@@ -68,7 +65,7 @@ class InjectorFinder(rootPass: String) {
 
 fun main(args: Array<String>) {
     val start = System.currentTimeMillis();
-    val finder = InjectorFinder("C:\\Users\\Admin\\IdeaProjects\\injectorParser")
+    val finder = InjectorFinder("C:\\Users")
     finder.searchInject()
     finder.showInjFiles()
     println(System.currentTimeMillis() - start);
